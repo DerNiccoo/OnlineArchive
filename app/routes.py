@@ -17,11 +17,6 @@ import os
 import time
 from shutil import copyfile
 
-@app.route("/reset", methods=['GET', 'POST'])
-def reset_db():
-  #TODO: #TODO: backend.reset_database()
-  return redirect(url_for('template_index'))
-
 @app.route("/")
 def index():
   session['file_urls'] = []
@@ -36,6 +31,9 @@ def search_images(search):
 def template_upload():
   # TODO: /upload & /confirm_upload ändern. Sodass /upload die Daten nur in einen Temporären ordner speichert, und die ERST NACH BESTÄTIGEN in das richtige System übernommen werden
   # Hier werden die Bilder einfach auch DIREKT hochgeladen. Dazu werden die aber einfach auf "unsichtbar" gestellt und ERST wenn der User die TAG form bestaetigt wird das wieder geaendert und die Bilder koennen eingesehen werden
+
+  if "content_upload" not in current_user.permissions_name:
+    return redirect(url_for("index"))
 
   if "file_urls" not in session:
     session['file_urls'] = []
@@ -131,6 +129,9 @@ def load():
 @app.route("/confirm_upload", methods=['POST'])
 @login_required
 def confirm_upload():
+  if "content_upload" not in current_user.permissions_name:
+    return redirect(url_for("index"))
+
   if "file_urls" not in session or session['file_urls'] == []:
     return redirect(url_for('index'))
 
@@ -160,7 +161,7 @@ def show_img(img_ID):
 def get_item_data():
   img_id = int(request.form['item'])
   typ = request.form['action']
-  user_filter = current_user.create_user_filter()
+  user_filter = get_user_filter()
 
   if typ == 'next':
     new_img_id = ImageQuery.get_new_image(img_id, True, user_filter) #TODO: Das hier könnte optimiert werden, da hier bereits das ganze Bild geladen wird
@@ -177,6 +178,9 @@ def get_item_data():
 @app.route("/addTag", methods=['POST'])
 @login_required
 def add_Tag_to_image():
+  if "tags_create" not in current_user.permissions_name:
+    return make_response(jsonify(action="failed", error="Fehlende Berechtigung"), 401)
+
   raw_tags = request.form['tags']
 
   for tag in raw_tags.split(','):
@@ -189,11 +193,18 @@ def add_Tag_to_image():
 @app.route("/removeTag", methods=['POST'])
 @login_required
 def remove_tag_from_image():  
+  if "tags_remove" not in current_user.permissions_name:
+    return make_response(jsonify(action="failed", error="Fehlende Berechtigung"), 401)
+
   Image_TextQuery.remove_tag(request.form['item'], request.form['tag'])
   return make_response(jsonify(action="success"), 200)
 
 @app.route('/results')
+@login_required
 def results():
+  if "content_upload" not in current_user.permissions_name:
+    return redirect(url_for("index"))
+  
   # redirect to home if no images to display
   if "file_urls" not in session or session['file_urls'] == []:
     return redirect(url_for('index'))
@@ -210,12 +221,12 @@ def get_content(filename):
 
   if img_info.filter > 1:
     if current_user.is_authenticated: 
-      if img_info.filter not in current_user.create_user_filter(): 
+      if img_info.filter not in get_user_filter(): 
         print("no permission")
-        return make_response(jsonify(action="failed"), 401) 
+        return make_response(jsonify(action="failed", error="Fehlende Berechtigung"), 401) 
     else:
       print("no permission")
-      return make_response(jsonify(action="failed"), 401)
+      return make_response(jsonify(action="failed", error="Fehlende Berechtigung"), 401)
   return send_from_directory("", filename)
 
 @app.route('/login', methods=['POST'])
@@ -246,26 +257,37 @@ def logout():
 @app.route('/filter', methods=['POST'])
 @login_required
 def filter():
+  user_filter = 0
+
   sfw = 1 if request.form.get("SFW") else 0 
   nsfw = 2 if request.form.get("NSFW") else 0
-  nsfl = 4 if request.form.get("NSFL") else 0
-  secret = 8 if request.form.get("SECRET") else 0
-  top_secret = 16 if request.form.get("TOP_SECRET") else 0
+  user_filter = sfw + nsfw
+
+  if "filter3" in current_user.permissions_name and request.form.get("NSFL"):
+    user_filter += 4
+  if "filter4" in current_user.permissions_name and request.form.get("SECRET"):
+    user_filter += 8
+  if "filter5" in current_user.permissions_name and request.form.get("TOP_SECRET"):
+    user_filter += 16
   
-  #TODO: Prüfen ob der Nutzer überhaupt diese Filter setzen darf!
-  AccountQuery.update_filter(current_user.username, (sfw + nsfw + nsfl + secret + top_secret))
+  AccountQuery.update_filter(current_user.username, (user_filter))
   return redirect(url_for('index'))
 
 @app.route('/changeFilter', methods=['POST'])
 @login_required
 def changeFilter():
+  if "filter_change" not in current_user.permissions_name:
+    return make_response(jsonify(action="failed", error="Fehlende Berechtigung"), 401)
+
   ImageQuery.change_img_filter(request.form['image'], request.form['filter'])
   return jsonify(action="success")
 
 @app.route('/removeImage', methods=['POST'])
 @login_required
 def remove_image():
-  # TODO: Prüfen ob der Nutzer die Berechtigung hat, das Bild zu löschen
+  if "content_remove" not in current_user.permissions_name:
+    return make_response(jsonify(action="failed", error="Fehlende Berechtigung"), 401)
+
   image_id = request.form["item"]
   Image_TextQuery.remove_tag(image_id)
   ImageQuery.remove_img(image_id)
@@ -278,6 +300,7 @@ def remove_image():
   return make_response(jsonify(action="success"), 200)
 
 @app.route('/user/<string:username>')
+@login_required
 def profile(username):
   profile_user = AccountQuery.get_User(username)
   profile_user.password_hash = None
@@ -287,6 +310,9 @@ def profile(username):
 @app.route('/getPermissions', methods=['POST'])
 @login_required
 def get_permissions():
+  if "allow_permission" not in current_user.permissions_name:
+    return make_response(jsonify(action="failed", error="Fehlende Berechtigung"), 401)
+
   user_permissions = AccountQuery.get_user_permissions(request.form['username'])
   permissions_query = PermissionQuery.get_permissions()
   permissions = []
@@ -299,6 +325,9 @@ def get_permissions():
 @app.route('/changePermission', methods=['POST'])
 @login_required
 def change_permission():
+  if "allow_permission" not in current_user.permissions_name:
+    return make_response(jsonify(action="failed", error="Fehlende Berechtigung"), 401)
+
   username = request.form['username']
   permission = request.form['permission'] 
   permission_state = request.form['permission_state']
@@ -342,12 +371,18 @@ def changePassword():
 @app.route('/registerForm', methods=['POST'])
 @login_required
 def registerForm():
+  if "user_create" not in current_user.permissions_name:
+    return redirect(url_for('index'))
+
   form = RegistrationForm()
   return render_template('register.html', form = form)
 
 @app.route('/register', methods=['POST'])
 @login_required
 def register():
+  if "user_create" not in current_user.permissions_name:
+    return make_response(jsonify(action="failed", error="Fehlende Berechtigung"), 401)
+    
   form = RegistrationForm()
   if form.validate_on_submit():
     AccountQuery.create_user(form.username.data, form.password.data)

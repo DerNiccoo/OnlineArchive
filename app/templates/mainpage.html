@@ -40,9 +40,11 @@
           <a class="nav-link" data-toggle="modal" data-target="#modalFilterForm">Filter</a>
         </li>
         {% endif %}
+        {% if current_user.username is defined %}
         <li class="nav-item">
           <a class="nav-link" href="/members">Mitglieder</a>
         </li>
+        {% endif %}
         {% if 'user_create' in current_user.permissions_name %}
         <li class="nav-item">
           <a class="nav-link" data-toggle="modal" data-target="#modalForm" onclick="show_registar_form()">Neuen Nutzer</a>

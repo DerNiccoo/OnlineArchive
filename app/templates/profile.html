@@ -20,6 +20,7 @@
       Rangordnung WIP
     </h2>
   </div>
+  {% if 'allow_permission' in current_user.permissions_name %}
   <div class="pane">
     <!-- Hier ist die komplette Rechte (permission) Verteilung enthalten.  -->
     <h2 class="section">
@@ -37,12 +38,15 @@
       </template>
     </ul>
   </div>
+  {% endif %}
   
 </div>
 
 <script>
 
+"{% if 'allow_permission' in current_user.permissions_name %}"
 load_permissions();
+"{% endif %}"
 
 function load_permissions() {
   let template_permission = document.getElementById("template_permission");

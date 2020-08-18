@@ -29,7 +29,9 @@
 </div>
 
 <script>
+  "{% if current_user.username is defined %}"
   load_members();
+  "{% endif %}"
 
   function load_members() {
     let template_member = document.getElementById("template-member");

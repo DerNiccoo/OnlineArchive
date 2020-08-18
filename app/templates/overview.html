@@ -1,0 +1,106 @@
+{% extends "mainpage.html" %}
+{% block content %}
+<div class="row" id="scroller">
+  <template id="post_template">
+    <div class="col-sm mb-3 animated fadeIn shadow-sm">
+        <a id="img_url" href=""> 
+          <img id="image" src="" alt="" height="128" width="128"> 
+        </a>
+    </div>
+
+  </template>
+
+</div>
+
+<div class="d-flex justify-content-center mb-3" id="sentinel">
+  <div class="spinner-border" role="status"></div>
+</div>
+
+<script>
+  // Get references to the dom elements
+  var scroller = document.querySelector("#scroller");
+  var template = document.querySelector('#post_template');
+  var loaded = document.querySelector("#loaded");
+  var sentinel = document.querySelector('#sentinel');
+  
+  // Set a counter to count the items loaded
+  var counter = 0;
+  
+  // Function to request new items and render to the dom
+  function loadItems() {
+    let path = window.location.pathname.split('/');
+    let fetch_string = `/load?c=${counter}`;
+    if (path.length > 2) {
+      fetch_string = `/load?c=${counter}&s=${path[2]}`
+    }
+
+    // Use fetch to request data and pass the counter value in the QS
+    fetch(fetch_string).then((response) => {
+  
+      // Convert the response data to JSON
+      response.json().then((data) => {
+  
+        // If empty JSON, exit the function
+        if (data["action"] != "more") {
+  
+          // Replace the spinner with "No more posts"
+          sentinel.innerHTML = "";
+
+          if (data["action"] == "end") {
+            return;
+          }          
+        }
+
+        images = data["images"];
+
+        // Iterate over the items in the response
+        for (var i = 0; i < images.length; i++) {
+  
+          // Clone the HTML template
+          let template_clone = template.content.cloneNode(true);
+          
+          id = images[i].substring(images[i].lastIndexOf("/")+ 1, images[i].lastIndexOf("."));
+
+          // Query & update the template content
+          template_clone.querySelector("#image").src = images[i];
+          template_clone.querySelector("#img_url").href = '/img/' + id;
+
+          // Append template to dom
+          scroller.appendChild(template_clone);
+  
+          // Increment the counter
+          counter += 1;
+  
+          // Update the counter in the navbar
+          //loaded.innerText = `${counter} items loaded`;
+  
+        }
+      })
+    })
+  }
+  
+  // Create a new IntersectionObserver instance
+  var intersectionObserver = new IntersectionObserver(entries => {
+  
+    // Uncomment below to see the entry.intersectionRatio when
+    // the sentinel comes into view
+  
+    // entries.forEach(entry => {
+    //   console.log(entry.intersectionRatio);
+    // })
+  
+    // If intersectionRatio is 0, the sentinel is out of view
+    // and we don't need to do anything. Exit the function
+    if (entries[0].intersectionRatio <= 0) {
+      return;
+    }
+  
+    // Call the loadItems function
+    loadItems();
+  
+  });
+  
+  // Instruct the IntersectionObserver to watch the sentinel
+  intersectionObserver.observe(sentinel);
+  </script>
+{% endblock %}

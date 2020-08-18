@@ -1,0 +1,334 @@
+{% extends "mainpage.html" %}
+{% block content %}
+<div class="item-container-content">
+  <div class="item-image-wrapper">
+    <div id="item-wrapper">
+      <div class="item-image">
+        <img class="item-image-actual" id="item-image-actual" src="{{imgPath}}" alt="Bild nicht gefunden!">
+        <embed class="item-pdf-actual" id="item-pdf-actual" />
+      </div>
+    </div>
+    <div class="item-prev" title="Neuer [«, a]" onclick="change_item('prev')">
+      <span class="item-prev-icon"></span>
+    </div>
+    <div class="item-next" title="Älter [», d]" onclick="change_item('next')">
+      <span class="item-next-icon"></span>
+    </div>
+  </div>
+
+
+  <div class="item-info">
+    {% if 'content_remove' in current_user.permissions_name %}
+    <div class="item-delete">
+      <span class="img-bin" id="img-bin" onclick="remove_img()" title="Bild löschen"><i class="fa fa-trash" aria-hidden="true"></i></span>
+    </div>
+    {% endif %}
+    {% if 'filter_change' in current_user.permissions_name %}
+    <div class="item-filter">
+      <div class="form-check form-check-inline">
+        <div class="custom-control custom-radio">
+          <input type="radio" class="custom-control-input" id="SFW_img" name="filter" onchange="filter_change()" value="1">
+          <label class="custom-control-label" for="SFW_img">SFW</label>
+        </div>
+      </div>
+      <div class="form-check form-check-inline">
+        <div class="custom-control custom-radio">
+          <input type="radio" class="custom-control-input" id="NSFW_img" name="filter" onchange="filter_change()" value="2">
+          <label class="custom-control-label" for="NSFW_img">NSFW</label>
+        </div>
+      </div>
+      <div class="form-check form-check-inline">
+        <div class="custom-control custom-radio">
+          <input type="radio" class="custom-control-input" id="NSFL_img" name="filter" onchange="filter_change()" value="3">
+          <label class="custom-control-label" for="NSFL_img">NSFL</label>
+        </div>
+      </div>
+      <div class="form-check form-check-inline">
+        <div class="custom-control custom-radio">
+          <input type="radio" class="custom-control-input" id="SECRET_img" name="filter" onchange="filter_change()" value="4">
+          <label class="custom-control-label" for="SECRET_img">SECRET</label>
+        </div>
+      </div>
+      <div class="form-check form-check-inline">
+        <div class="custom-control custom-radio">
+          <input type="radio" class="custom-control-input" id="TOP_SECRET_img" name="filter" onchange="filter_change()" value="5">
+          <label class="custom-control-label" for="TOP_SECRET_img">TOP SECRET</label>
+        </div>	
+      </div>   
+    </div>
+    {% endif %}
+    <div class="item-details">
+      <span class="time">Hochgeladen am: </span>
+      <a class="time" id="time" title="10. Mär 2020 - 08:52" href="#">vor einer Minute</a>
+      <span class="time">von</span>
+      <a class="user" id="user" href="/user/Nico">Nico</a>
+    </div>
+
+    <div class="item-tags">
+      <div class="tags">
+        <div id="tag-list">
+          <template id="template-tags">
+            <span id="tag" class="tag">
+              <a class="tag-link" id="tag-link" href="/search/Feuerwehr">Feuerwehr</a>
+              {% if 'tags_remove' in current_user.permissions_name %}
+                <span class="vote-bin" id="vote-bin" onclick="remove_tag(this)" title="Feuerwehr"><i class="fa fa-trash" aria-hidden="true"></i></span>
+              {% else %}
+                <span class="vote-bin" id="vote-bin" title="Feuerwehr" style="display: none;"><i class="fa fa-trash" aria-hidden="true"></i></span>
+              {% endif %}
+            </span>
+          </template>
+        </div>
+        {% if 'tags_create' in current_user.permissions_name %}
+          <a class="add-tags-link action" id="add-tags-link" href="" title="Tags hinzufügen [t]">Tags hinzufügen...</a>
+        {% endif %}
+      </div>
+      <form class="tag-form" method="post">
+        <input id="tags343269784123798" class="item-tagsinput" type="text" name="tags" style="display: none;">
+        <div id="tagsinput" class="tagsinput item-tagsinput">
+            <input type="text" id="tag-writebox" class="tagsinput-writebox" value="" placeholder="Tags hinzufügen, mit Komma trennen" onkeyup="keyPressed()">
+        </div>
+        <div id="tagsinput" class="tagsinput item-tagsinput">
+          <div id="addTag" style="float: left;">
+            
+            <template id="addTag-template">
+              <span id="tag" class="tag">
+                <a class="tag-link">Frankreich</a>
+                <span class="vote-remove"><i class="fa fa-trash" aria-hidden="true"></i></span>
+              </span>
+            </template>
+    
+          </div>                            
+        </div>
+        <input type="hidden" name="itemId" value="00000">
+        <input type="submit" value="Tags speichern">
+        <input class="cancel" type="button" value="Abbrechen">
+      </form>
+    </div>
+  </div>  
+</div>
+
+<script>
+  //filter options
+
+  function filter_change() {
+    let imgID = window.location.pathname.split('/')[2];
+    let value = document.querySelector('input[name="filter"]:checked').value;
+
+    $.ajax({
+        type: "POST",
+        url: '/changeFilter',
+        data: { "filter": value, "image": imgID },
+        success: function (data) {
+          show_snackbar("Filter erfolgreich geändert!");
+        }
+      });
+  }
+</script>
+
+<!--
+  This here is for adding tags to the form
+-->
+<script>
+  let form = document.getElementsByClassName('tag-form')[0];
+  if (form.attachEvent) {
+      form.attachEvent("submit", processForm);
+  } else {
+      form.addEventListener("submit", processForm);
+  }
+
+  function processForm(e) {
+    let imgID = window.location.pathname.split('/')[2];
+
+    if (e.preventDefault) e.preventDefault();
+
+    $.ajax({
+        type: "POST",
+        url: '/addTag',
+        data: { "tags": tag_writebox.value, "image": imgID },
+        success: function (data) {
+          tag_writebox.value = "";
+          tag_container.innerHTML = "";
+          $(".tag-form").hide();
+          change_item('load');
+        }
+      });
+
+    // You must return false to prevent the default form behavior
+    return false;
+  }
+</script>
+
+<!--
+  End of tagging section
+-->
+
+<script>
+
+  function remove_img() {
+    let imgID = window.location.pathname.split('/')[2];
+
+    $.ajax({
+        type: "POST",
+        url: '/removeImage',
+        data: { "item": imgID },
+        success: function (data) {
+          show_snackbar("Bild erfolgreich gelöscht!");
+        }
+      });
+  }
+
+  function remove_tag(element) {
+    let imgID = window.location.pathname.split('/')[2];
+
+    $.ajax({
+        type: "POST",
+        url: '/removeTag',
+        data: { "item": imgID, "tag": element.title },
+        success: function (data) {
+          show_snackbar("Tag erfolgreich gelöscht!");
+          change_item('load');
+        }
+      });
+  }
+</script>
+
+<script>
+  let time = document.getElementById('time');
+  let user = document.getElementsByClassName('user')[0];
+  let filter_radios = document.getElementsByClassName('custom-control-input');
+
+  let tags = document.getElementById("tag-list");
+  let template_tags = document.getElementById("template-tags");
+
+  change_item('load');
+  function change_item(type) {
+    let imgID = window.location.pathname.split('/')[2];
+
+    $.ajax({
+        type: "POST",
+        url: '/data',
+        data: { "item": imgID, "action": type },
+        success: function (data) {
+          if (data["image"].includes('pdf')) {
+            document.getElementById('item-image-actual').style.display  = "none";
+            document.getElementById('item-pdf-actual').style.display  = "block";
+            document.getElementById('item-pdf-actual').src = data['image'];
+          }
+          else {
+            document.getElementById('item-pdf-actual').style.display  = "none";
+            document.getElementById('item-image-actual').style.display  = "block";
+            document.getElementById('item-image-actual').src = data['image'];
+          }
+
+          
+          window.history.pushState({page: data['id']}, "Archiv", "/img/" + data['id'])
+
+          for (let item of filter_radios) { //Sets the correct filter for the images
+            if (item.value == data["img_filter"]) {
+              item.checked = true;
+            }
+          };
+          console.log(new Date(data["time"]));
+          time.title = timeConverter(data["time"], false);
+          time.innerHTML = timeConverter(data["time"], true);
+          user.href = "/user/" + data["author"];
+          user.innerHTML = data["author"];
+
+          tags.innerHTML = "";
+          
+          data["tags"].forEach(element => {
+            let template_clone = template_tags.content.cloneNode(true);
+            template_clone.querySelector("#tag-link").href = "/search/" + element;
+            template_clone.querySelector("#tag-link").innerHTML = element;
+            template_clone.querySelector("#vote-bin").title = element;
+            tags.appendChild(template_clone);
+          });
+
+        }
+      });
+  }
+
+</script>
+
+<script>
+  let tag_writebox = document.getElementById('tag-writebox');
+  let tag_container = document.getElementById('addTag'); 
+  let template = document.querySelector('#addTag-template');
+
+  function keyPressed() {
+
+    let tag_collection = tag_writebox.value;
+    
+    tag_container.innerHTML = "";
+
+    //hier alle vorhandenen Tags löschen? Nicht sicher ob beste idee
+    
+    if (tag_collection !== null && tag_collection.includes(',')) {
+      let tags = tag_collection.split(',');
+
+      tags.forEach(function(entry) {
+        
+        if (!entry.replace(/\s/g, '').length) {
+          return false;
+        }
+
+        let template_clone = template.content.cloneNode(true);
+        
+        template_clone.querySelector(".tag-link").href = '/search/' + entry.trim();
+        template_clone.querySelector(".tag-link").innerHTML = entry.trim();
+        template_clone.querySelector(".vote-remove").onclick = () => this.remove(entry.trim());
+
+        tag_container.appendChild(template_clone);
+
+        //hier ein Tag adden
+      });
+
+    } else if (tag_collection !== null && tag_collection.replace(/\s/g, '').length) {
+
+      let template_clone = template.content.cloneNode(true);
+        
+        template_clone.querySelector(".tag-link").href = '/search/' + tag_collection.trim();
+        template_clone.querySelector(".tag-link").innerHTML = tag_collection.trim();
+        template_clone.querySelector(".vote-remove").onclick = () => this.remove(tag_collection.trim());
+
+        tag_container.appendChild(template_clone);      
+    }
+  }
+</script>
+
+<script>
+  function remove(entry) {
+    console.log(entry);
+    let tag_collection = tag_writebox.value;
+
+    if (tag_collection.includes(entry + ',')) {
+      tag_collection.replace(entry + ',', '');
+    } else if (tag_collection.includes(',' + entry)) {
+      tag_collection.replace(',' + entry, '');
+    } else {
+      tag_collection.replace(entry, '');
+    }
+    
+
+    tag_writebox.value = tag_collection;
+    console.log(tag_collection);
+  }
+</script>
+
+<script type="text/javascript">
+  $('.add-tags-link').click(function(event) { 
+    event.preventDefault(); 
+    $(".tag-form").show();
+    return false; // for good measure
+  });
+
+  $('.cancel').click(function(event) { 
+    event.preventDefault(); 
+    $(".tag-form").hide();
+    return false; // for good measure
+  });
+</script>
+
+{% endblock %}
+
+

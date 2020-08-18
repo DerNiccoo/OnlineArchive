@@ -1,0 +1,60 @@
+{% extends "mainpage.html" %}
+{% block content %}
+<div class="member">
+  <div class="pane">
+    <!-- Hier soll es möglich sein, den Rank des Nutzers festzulegen -->
+    <h2 class="section">
+      Mitglieder
+    </h2>
+
+    <table class="table">
+      <thead>
+        <tr>
+          <th scope="col">#</th>
+          <th scope="col">Benutzer</th>
+          <th scope="col">Dabei seit</th>
+        </tr>
+      </thead>
+      <tbody id="table-member-body">
+        <template id="template-member">
+          <tr>
+            <th scope="row"><a id="template-id"></a></th>
+            <td><a id="template-username"></a></td>
+            <td><a id="template-created"></a></td>
+          </tr>
+        </template>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+  load_members();
+
+  function load_members() {
+    let template_member = document.getElementById("template-member");
+    let member_list = document.getElementById("table-member-body");
+
+    $.ajax({
+      type: "POST",
+      url: '/getMembers',
+      success: function (data) {
+        if (data["action"] == "success") {          
+          data["members"].forEach(element => {
+            let template_clone = template_member.content.cloneNode(true);
+            
+            template_clone.querySelector("#template-id").innerHTML = element[0];
+            template_clone.querySelector("#template-id").href = "/user/" + element[1];
+            template_clone.querySelector("#template-username").innerHTML = element[1];
+            template_clone.querySelector("#template-username").href = "/user/" + element[1];
+            template_clone.querySelector("#template-created").innerHTML = timeConverter(element[2]);
+            template_clone.querySelector("#template-created").href = "/user/" + element[1];
+
+            member_list.appendChild(template_clone);
+          });
+        }      
+      }
+    });  
+  }
+</script>
+{% endblock %}

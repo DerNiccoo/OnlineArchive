@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>Archiv</title>
+  {{ dropzone.load() }}
+  {{ dropzone.style('border: 2px dashed #0087F7; margin: 10%; min-height: 400px;') }}
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
+  <!-- <script src="{{ url_for('static', filename='credentials.js') }}"></script> -->
+  <link rel="stylesheet" href= "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">  
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.7.0/animate.min.css">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+
+<body style="overflow-x: hidden;">
+  <nav class="navbar fixed-top navbar-expand-sm navbar-dark bg-dark justify-content-between">
+    <a class="navbar-brand" href="/">Archiv</a>
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav">
+        {% block navbar %}
+        {% if current_user.username is defined %}
+        <li class="nav-item">
+          <a class="nav-link" href="/logout" onclick="sessionStorage.clear();">Logout</a>
+        </li>
+        {% else %}
+        <li class="nav-item" id="user-statutus">
+          <a class="nav-link" data-toggle="modal" data-target="#modalLoginForm">Login</a>
+        </li>
+        {% endif %}
+        {% if 'content_upload' in current_user.permissions_name %}
+        <li class="nav-item">
+          <a class="nav-link" href="/Upload">Upload</a>
+        </li>
+        {% endif %}
+        {% if current_user.username is defined %}
+        <li class="nav-item">
+          <a class="nav-link" data-toggle="modal" data-target="#modalFilterForm">Filter</a>
+        </li>
+        {% endif %}
+        <li class="nav-item">
+          <a class="nav-link" href="/members">Mitglieder</a>
+        </li>
+        {% if 'user_create' in current_user.permissions_name %}
+        <li class="nav-item">
+          <a class="nav-link" data-toggle="modal" data-target="#modalForm" onclick="show_registar_form()">Neuen Nutzer</a>
+        </li>
+        {% endif %}
+        {% endblock %}
+      </ul>
+    </div>
+    <form class="form-inline my-2 my-lg-0" id="search-form" method="POST" action="/search">
+      <input class="form-control mr-sm-2" id ="search-bar" type="search" placeholder="Suchen" aria-label="Search">
+      <button class="btn btn-outline-success my-2 my-sm-0" type="submit">Suchen</button>
+    </form>
+    {% block navbarExtra %}
+    {% endblock %}
+  </nav>
+  <div class="overallContent">
+    <div class="row">
+      <div class="col-sm-2"></div>
+      <div class="col-sm-8">        
+        <div id="snackbar"></div>
+        {% block content %}{% endblock %}
+      </div>
+      <div class="col-sm-2"></div>
+    </div>
+  </div>
+
+  <div class="modal fade" id="modalLoginForm">
+    <div class="modal-dialog modal-login">
+      <div class="modal-content modalLoginContent">
+        <div class="modal-header">				
+          <h4 class="modal-title modalLoginTitle">Anmelden</h4>
+          <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div class="form-group">
+              <input type="text" id="username" name="username" class="form-control" placeholder="Username" required="required">
+            </div>
+            <div class="form-group">
+              <input type="password" id="password" name="password" class="form-control" placeholder="Password" required="required">					
+            </div>
+            <div class="form-group">
+              <input type="button" value="Login" onclick="login()">
+            </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal fade" id="modalForm">
+    <div class="modal-dialog modal-form">
+      <div class="modal-content modalContent" id="modal-dialog">
+
+      </div>
+    </div>
+  </div>
+
+  <div class="modal fade" id="modalFilterForm">
+    <div class="modal-dialog modal-sm modal-filter">
+      <div class="modal-content modalFilterContent">
+        <div class="modal-header">				
+          <h4 class="modal-title modalFilterTitle">Filter</h4>
+          <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+        </div>
+        <div class="modal-body">
+          <form id="filterOptions" action="/filter" method="post">
+            <div class="form-group">
+              <div class="custom-control custom-checkbox">
+                <input type="checkbox" class="custom-control-input" id="SFW" name="SFW">
+                <label class="custom-control-label" for="SFW">SFW</label>
+              </div>
+            </div>
+            <div class="form-group">
+              <div class="custom-control custom-checkbox">
+                <input type="checkbox" class="custom-control-input" id="NSFW" name="NSFW">
+                <label class="custom-control-label" for="NSFW">NSFW</label>
+              </div>
+            </div>
+            {% if 'filter3' in current_user.permissions_name %}
+            <div class="form-group">
+              <div class="custom-control custom-checkbox">
+                <input type="checkbox" class="custom-control-input" id="NSFL" name="NSFL">
+                <label class="custom-control-label" for="NSFL">NSFL</label>
+              </div>
+            </div>
+            {% endif %}
+            {% if 'filter4' in current_user.permissions_name %}
+            <div class="form-group">
+              <div class="custom-control custom-checkbox">
+                <input type="checkbox" class="custom-control-input" id="SECRET" name="SECRET">
+                <label class="custom-control-label" for="SECRET">SECRET</label>
+              </div>
+            </div>
+            {% endif %}
+            {% if 'filter5' in current_user.permissions_name %}
+            <div class="form-group">
+              <div class="custom-control custom-checkbox">
+                <input type="checkbox" class="custom-control-input" id="TOP_SECRET" name="TOP_SECRET">
+                <label class="custom-control-label" for="TOP_SECRET">TOP SECRET</label>
+              </div>	
+            </div>       
+            {% endif %}     
+            <div class="form-group">
+              <input type="submit" value="Speichern">
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+
+
+</html>
+
+<script>
+  function show_registar_form() {
+    $.ajax({
+      type: "POST",
+      url: '/registerForm',
+      success: function (data) {
+        document.getElementById('modal-dialog').innerHTML = data;
+        //document.getElementById('register_password').disabled = true;
+        document.getElementById('register_password').value = generatePassword();
+        
+        $('#register-form').submit(function (e) {
+          $.ajax({
+            type: "POST",
+            url: "{{ url_for('register') }}",
+            data: $('#register-form').serialize(), // serializes the form's elements.
+            success: function (data) {
+              if (data["action"] == "failed") {
+                show_snackbar(data["error"]["username"])
+              } else {
+                window.location.href = "/user/" + data["username"];
+              }
+            }
+          });
+          e.preventDefault(); // block the traditional submission of the form.
+        });
+      }
+    });    
+  }
+
+  function show_change_password_form() {
+    $.ajax({
+      type: "POST",
+      url: '/changePasswordForm',
+      success: function (data) {
+        document.getElementById('modal-dialog').innerHTML = data;        
+        $('#change-password-form').submit(function (e) {
+          $.ajax({
+            type: "POST",
+            url: "{{ url_for('changePassword') }}",
+            data: $('#change-password-form').serialize(), // serializes the form's elements.
+            success: function (data) {
+              if (data["action"] == "failed") {
+                show_snackbar(data["error"][Object.keys(data["error"])[0]])
+              } else {
+                $('#modalForm').modal('hide');
+                sessionStorage.removeItem("change_password")
+                show_snackbar("Dein Passwort wurder erfolgreich geändert!")
+              }
+            }
+          });
+          e.preventDefault(); // block the traditional submission of the form.
+        });
+      }
+    });    
+  }
+
+  function generatePassword() {
+    var length = 32,
+        charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!§$%&/()=?#+*-_.{[]}",
+        retVal = "";
+    for (var i = 0, n = charset.length; i < length; ++i) {
+      retVal += charset.charAt(Math.floor(Math.random() * n));
+    }
+    return retVal;
+  }
+
+  function timeConverter(UNIX_timestamp, onlyDate){
+    let options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', 'hour': "2-digit", "minute": "2-digit" }
+    if (onlyDate) {
+      options = { year: 'numeric', month: 'short', day: 'numeric' }
+    } 
+
+    let date = new Date(UNIX_timestamp);
+    return date.toLocaleDateString('de-DE', options);
+  }
+
+  function show_snackbar(text) {
+    let snackbar = document.getElementById("snackbar");
+    snackbar.innerHTML = text;
+
+    snackbar.className = "show"
+
+    // After 3 seconds, remove the show class from DIV
+    setTimeout(function(){ snackbar.className = snackbar.className.replace("show", ""); }, 3000);
+  }
+
+  $(function() {
+      $('#search-form').submit(function(e) {
+        let search_term = document.getElementById("search-bar");
+        
+        if (search_term !== "") {
+          window.location.href = "/search/" + search_term.value;
+        }
+        e.preventDefault();
+      });
+  });
+
+  $('#register-form').submit(function (e) {
+    $.ajax({
+      type: "POST",
+      url: "{{ url_for('register') }}",
+      data: $('form').serialize(), // serializes the form's elements.
+      success: function (data) {
+        if (data["action"] == "failed") {
+          show_snackbar(data["error"]["username"])
+        } else {
+          window.location.href = "/user/" + data["username"];
+        }
+      }
+    });
+    e.preventDefault(); // block the traditional submission of the form.
+  });
+
+  // Abfangen der Filteroptionen, um vorher die cookies zu setzen
+  $('#filterOptions').submit(function() {
+    let sfw = document.getElementById("SFW").checked;
+    let nsfw = document.getElementById("NSFW").checked;
+    let nsfl = document.getElementById("NSFL").checked;
+    let secret = document.getElementById("SECRET").checked;
+    let top_secret = document.getElementById("TOP_SECRET").checked;
+
+    if (!sfw && !nsfw && !nsfl && !secret && !top_secret) {
+      sfw = true;
+      document.getElementById("SFW").checked = true;
+    }
+
+    sessionStorage.setItem("filter", JSON.stringify({SFW: sfw, NSFW: nsfw, NSFL: nsfl, SECRET: secret, TOP_SECRET: top_secret}), { sameSite:'strict; Secure' });
+    return true;
+  });
+
+  function login() {
+    $.ajax({
+      type: "POST",
+      url: '/login',
+      data: { "username": document.getElementById("username").value, "password": document.getElementById("password").value },
+      success: function (data) {
+        if (data["action"] == "failed") {
+          show_snackbar("Login fehlgeschlagen!");
+        }
+        else if (data["action"] == "success") {
+          if (data['change_passwort' == true]) {
+            sessionStorage.setItem("change_password", true, { sameSite:'strict; Secure' });
+          }
+          
+          window.location.replace("/");
+        }     
+      }
+    });
+  }
+
+set_filter("{{ current_user._filter }}");
+
+if (sessionStorage.getItem("change_password")) {
+  show_snackbar("Bitte änder dein initiales Passwort!");
+  $('#modalForm').modal('show');
+  show_change_password_form();
+}
+
+function set_filter(filter_list_as_string) {
+  /// Sadly the worst solution but since i need to check each element by its own this is kinda oke?
+  let filter_json = {"SFW": false, "NSFW": false, "NSFL": false, "SECRET": false, "TOP_SECRET": false};
+  if (filter_list_as_string.includes("1")){
+    document.getElementById("SFW").checked = true;
+    filter_json["SFW"] = true;
+  } 
+  if (filter_list_as_string.includes("2")) {
+    document.getElementById("NSFW").checked = true;
+    filter_json["NSFW"] = true;
+  } 
+  if (filter_list_as_string.includes("3")) {
+    document.getElementById("NSFL").checked = true;
+    filter_json["NSFL"] = true;
+  } 
+  if (filter_list_as_string.includes("4")) {
+    document.getElementById("SECRET").checked = true;
+    filter_json["SECRET"] = true;
+  } 
+  if (filter_list_as_string.includes("5")) {
+    document.getElementById("TOP_SECRET").checked = true;
+    filter_json["TOP_SECRET"] = true;
+  } 
+  
+  sessionStorage.setItem("filter", filter_json, { sameSite:'strict; Secure' });
+}
+
+</script>

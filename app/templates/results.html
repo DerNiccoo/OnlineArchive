@@ -1,0 +1,120 @@
+{% extends "mainpage.html" %}
+{% block content %}
+<form action="/confirm_upload" id="tag-form-upload" class="tag-form-upload" method="post" style="margin: 40px 0 40px 0;">
+  <div class="item-filter">
+    <div class="form-check form-check-inline">
+      <div class="custom-control custom-radio">
+        <input type="radio" class="custom-control-input" id="SFW_img" name="filter" value="1">
+        <label class="custom-control-label" for="SFW_img">SFW</label>
+      </div>
+    </div>
+    <div class="form-check form-check-inline">
+      <div class="custom-control custom-radio">
+        <input type="radio" class="custom-control-input" id="NSFW_img" name="filter" value="2" checked>
+        <label class="custom-control-label" for="NSFW_img">NSFW</label>
+      </div>
+    </div>
+    <div class="form-check form-check-inline">
+      <div class="custom-control custom-radio">
+        <input type="radio" class="custom-control-input" id="NSFL_img" name="filter" value="3">
+        <label class="custom-control-label" for="NSFL_img">NSFL</label>
+      </div>
+    </div>
+    <div class="form-check form-check-inline">
+      <div class="custom-control custom-radio">
+        <input type="radio" class="custom-control-input" id="SECRET_img" name="filter" value="4">
+        <label class="custom-control-label" for="SECRET_img">SECRET</label>
+      </div>
+    </div>
+    <div class="form-check form-check-inline">
+      <div class="custom-control custom-radio">
+        <input type="radio" class="custom-control-input" id="TOP_SECRET_img" name="filter" value="5">
+        <label class="custom-control-label" for="TOP_SECRET_img">TOP SECRET</label>
+      </div>	
+    </div>   
+  </div>
+  <div id="tagsinput" class="tagsinput item-tagsinput">
+      <input type="text" id="tag-writebox" class="tagsinput-writebox" value="" placeholder="Tags hinzufügen, mit Komma trennen" onkeyup="keyPressed()">
+  </div>
+  <div id="tagsinput" class="tagsinput item-tagsinput">
+    <div id="addTag" style="float: left;">
+      
+      <template id="addTag-template">
+        <span id="tag" class="tag">
+          <a class="tag-link">Frankreich</a>
+          <span class="vote-remove" href=""><i class="fa fa-trash" aria-hidden="true"></i></span>
+        </span>
+      </template>
+
+    </div>                            
+  </div>
+  <input id ="hidden-tags" type="hidden" name="tags" value="">
+  <input type="submit" value="Tags speichern">
+  <input class="cancel" type="button" value="Abbrechen">
+</form>
+
+<div class="row" id="scroller" style="margin: 0px;">
+  {% for file_url in file_urls %}
+    <div class="mb-3 animated fadeIn shadow-sm">
+      <img style="width: 128px; height: 128px; margin: 20px 20px 20px 0;" src="{{ file_url }}">
+    </div>
+  {% endfor %}
+</div>
+
+
+<script>
+  let hidden_tags = document.getElementById('hidden-tags');
+  let tag_writebox = document.getElementById('tag-writebox');
+  let tag_container = document.getElementById('addTag'); 
+  let template = document.querySelector('#addTag-template');
+
+  // Abfangen der Form, zum prüfen ob die Eingaben gültig sind
+  $('#tag-form-upload').submit(function() {
+      if (tag_writebox.value !== null) {
+        return true;
+      }        
+      else {
+        return false;
+      }
+  });
+
+  function keyPressed() {
+
+    hidden_tags.value = tag_writebox.value;
+    let tag_collection = tag_writebox.value;
+    
+    tag_container.innerHTML = "";
+
+    //hier alle vorhandenen Tags löschen? Nicht sicher ob beste idee
+    
+    if (tag_collection !== null && tag_collection.includes(',')) {
+      let tags = tag_collection.split(',');
+
+      tags.forEach(function(entry) {
+        
+        if (!entry.replace(/\s/g, '').length) {
+          return false;
+        }
+
+        let template_clone = template.content.cloneNode(true);
+      
+        template_clone.querySelector(".tag-link").href = '/search/' + entry.trim();
+        template_clone.querySelector(".tag-link").innerHTML = entry.trim();
+        template_clone.querySelector(".vote-remove").onclick = () => this.remove(entry.trim());
+        tag_container.appendChild(template_clone);
+
+        //hier ein Tag adden
+      });
+
+    } else if (tag_collection !== null && tag_collection.replace(/\s/g, '').length) {
+
+      let template_clone = template.content.cloneNode(true);
+    
+      template_clone.querySelector(".tag-link").href = '/search/' + tag_collection.trim();
+      template_clone.querySelector(".tag-link").innerHTML = tag_collection.trim();
+      template_clone.querySelector(".vote-remove").onclick = () => this.remove(tag_collection.trim());
+      tag_container.appendChild(template_clone);
+    }
+  }
+</script>
+{% endblock %}

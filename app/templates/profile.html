@@ -1,0 +1,96 @@
+{% extends "mainpage.html" %}
+{% block content %}
+<div class="profile">
+  <h1 class="user-head" id="user-name">{{ profile_user.username }}</h1>
+  
+  <div class="user-stats">
+    <!-- Hier soll später stehen: Dabei seit, Hochlads, anzahl gesetzter Tags, Rank -->
+  </div>
+  
+  {% if profile_user.username == current_user.username %}
+  <div class="user-settings">
+    <a class="change-passwort-link action" href="" title="Passwort ändern" data-toggle="modal" data-target="#modalForm" onclick="show_change_password_form()">Passwort ändern</a>
+  </div>
+  {% endif %}
+  
+  <!-- TODO: Das ganze noch um eine Preview der neusten Hochlads erweitern -->
+  <div class="pane" style="display: none;">
+    <!-- Hier soll es möglich sein, den Rank des Nutzers festzulegen -->
+    <h2 class="section">
+      Rangordnung WIP
+    </h2>
+  </div>
+  <div class="pane">
+    <!-- Hier ist die komplette Rechte (permission) Verteilung enthalten.  -->
+    <h2 class="section">
+      Nutzerrechte
+    </h2>
+    <!-- TODO: Ändern, sodass alles hiervon aus dem Backend geladen wird und somit dynamisch erstellt werden kann -->
+    <ul class="permissions" id="permissions-list">
+      <template id="template_permission">
+        <li>
+          <div class="custom-control custom-checkbox permission">
+            <input type="checkbox" class="custom-control-input" id="permission" onchange="permission_change(this)"/>
+            <label class="custom-control-label" id="permission-label" for="content_upload">Inhalte hochladen</label>
+          </div>
+        </li>
+      </template>
+    </ul>
+  </div>
+  
+</div>
+
+<script>
+
+load_permissions();
+
+function load_permissions() {
+  let template_permission = document.getElementById("template_permission");
+  let permissions_list = document.getElementById("permissions-list");
+
+  let user_permissions = []  
+
+  $.ajax({
+    type: "POST",
+    url: '/getPermissions',
+    data: { "username": "{{ profile_user.username }}" },
+    success: function (data) {
+      if (data["action"] == "success") {
+        data["user_permissions"].forEach(element => {
+          user_permissions.push(element);
+        });
+        
+        data["permissions"].forEach(element => {
+          let template_clone = template_permission.content.cloneNode(true);
+          
+          if (user_permissions.includes(element[0])) {
+            template_clone.querySelector("#permission").checked = true;
+          }
+          
+          template_clone.querySelector("#permission").id = element[0];
+          template_clone.querySelector("#permission-label").htmlFor = element[0];
+          template_clone.querySelector("#permission-label").innerHTML = element[1];
+          
+
+          permissions_list.appendChild(template_clone);
+        });
+      }      
+    }
+  });  
+}
+
+function permission_change(element) {
+  $.ajax({
+    type: "POST",
+    url: '/changePermission',
+    data: { "username": "{{ profile_user.username }}", "permission": element.id, "permission_state": element.checked },
+    success: function (data) {
+      if (data["action"] == "success") {
+        show_snackbar("Nutzerrechte erfolgreich geändert!")
+      }      
+    }
+  });
+}
+
+</script>
+{% endblock %}

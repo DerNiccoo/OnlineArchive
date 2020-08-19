@@ -61,7 +61,7 @@ class Account(UserMixin, db.Model):
 class AccountQuery(object):
   @staticmethod
   def get_User(username):
-    account = Account.query.filter_by(username=username).first()
+    account = Account.query.filter(Account.username.ilike(username)).first()
     return account if hasattr(account, 'id') else None
 
   @staticmethod
@@ -71,12 +71,12 @@ class AccountQuery(object):
     
   @staticmethod
   def get_user_filter(username):
-    account = Account.query.filter_by(username=username).first()
+    account = Account.query.filter(Account.username.ilike(username)).first()
     return account.filter if hasattr(account, 'id') else None
 
   @staticmethod
   def update_filter(username, filter):
-    account = Account.query.filter_by(username=username).first()
+    account = Account.query.filter(Account.username.ilike(username)).first()
     account.filter = filter
     account._filter = account.create_user_filter()
     db.session.commit()
@@ -84,7 +84,7 @@ class AccountQuery(object):
 
   @staticmethod
   def get_user_permissions(username):
-    account = Account.query.filter_by(username=username).first()
+    account = Account.query.filter(Account.username.ilike(username)).first()
     return account.set_permissions_name()
 
   @staticmethod
@@ -96,7 +96,7 @@ class AccountQuery(object):
 
   @staticmethod
   def update_password(username, password):
-    account = Account.query.filter_by(username=username).first()
+    account = Account.query.filter(Account.username.ilike(username)).first()
     account.set_password(password)
     account.default_pw = False
     db.session.commit()

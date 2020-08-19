@@ -238,15 +238,16 @@ def login():
   password = request.form['password']
 
   user = AccountQuery.get_User(username)
-  
+  if user == None:
+    return make_response(jsonify(action="failed", error="Nutzer nicht vorhanden!"), 200)  
+
   if user.check_password(password):
     login_user(user, remember=True)
     if user.default_pw:
       return make_response(jsonify(action="success", change_passwort = True), 200) 
     return make_response(jsonify(action="success"), 200)  
   else:
-    print("Login fehlgeschlagen")
-    return make_response(jsonify(action="failed"), 200)    
+    return make_response(jsonify(action="failed", error="Ungültiges Passwort!"), 200)    
 
 @app.route('/logout')
 @login_required

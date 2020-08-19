@@ -274,11 +274,11 @@
 
   // Abfangen der Filteroptionen, um vorher die cookies zu setzen
   $('#filterOptions').submit(function() {
-    let sfw = document.getElementById("SFW").checked;
-    let nsfw = document.getElementById("NSFW").checked;
-    let nsfl = document.getElementById("NSFL").checked;
-    let secret = document.getElementById("SECRET").checked;
-    let top_secret = document.getElementById("TOP_SECRET").checked;
+    let sfw = getFilterValue("SFW")
+    let nsfw = getFilterValue("NSFW")
+    let nsfl = getFilterValue("NSFL")
+    let secret = getFilterValue("SECRET")
+    let top_secret = getFilterValue("TOP_SECRET")
 
     if (!sfw && !nsfw && !nsfl && !secret && !top_secret) {
       sfw = true;
@@ -288,6 +288,14 @@
     sessionStorage.setItem("filter", JSON.stringify({SFW: sfw, NSFW: nsfw, NSFL: nsfl, SECRET: secret, TOP_SECRET: top_secret}), { sameSite:'strict; Secure' });
     return true;
   });
+
+  function getFilterValue(elementID) {
+    let element = document.getElementById(elementID);
+    if (typeof(element) != 'undefined' && element != null) {
+      return element.checked;
+    }
+    return false;
+  }
 
   function login() {
     $.ajax({

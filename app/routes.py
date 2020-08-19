@@ -138,7 +138,8 @@ def confirm_upload():
   file_urls = session['file_urls']
   session.pop('file_urls', None)
 
-  tags = tags_to_list(request.form.get('tags'))
+  tags, duplicates = tags_to_list(request.form.get('tags'))
+  print(tags)
   img_filter = request.form.get("filter")
 
   for path in file_urls:
@@ -181,14 +182,23 @@ def add_Tag_to_image():
   if "tags_create" not in current_user.permissions_name:
     return make_response(jsonify(action="failed", error="Fehlende Berechtigung"), 401)
 
-  raw_tags = request.form['tags']
+  img_tags = Image_TextQuery.get_tags_to_image(request.form['image'])
+  raw_tags, duplicates = tags_to_list(request.form['tags'], img_tags)
 
-  for tag in raw_tags.split(','):
-    image_Text = Image_Text(request.form['image'], tag.strip(), current_user.username)
+  for tag in raw_tags:
+    image_Text = Image_Text(request.form['image'], tag, current_user.username)
     db.session.add(image_Text)
+    new_tags.append(tag)
 
   db.session.commit()
-  return jsonify(action="success")
+
+  if duplicates == 0:
+    return jsonify(action="success")
+  else:
+    if duplicates > 1:
+      return jsonify(action="success", error= f'{duplicates} Tags wurden übersprungen.')
+    else:
+      return jsonify(action="success", error= f'{duplicates} Tag wurde übersprungen.')
 
 @app.route("/removeTag", methods=['POST'])
 @login_required
@@ -396,13 +406,17 @@ def get_user_filter():
   else:
     return (1, )
 
-def tags_to_list(tags_string):
-  tag = []
+def tags_to_list(tags_string, existing_tags = []):
+  tag_list = []
+  duplicate = 0
 
-  for splitted_tag in tags_string.split(','):
-    tag.append(splitted_tag.strip())
+  for tag in tags_string.split(','):
+    if tag.strip() not in tag_list and tag.strip() not in existing_tags and not tag.isspace() and len(tag.strip()) > 1:
+      tag_list.append(tag.strip())
+    else:
+      duplicate += 1
 
-  return tag
+  return tag_list, duplicate
 
 def create_search_term(searchTerm):
   if searchTerm == None:

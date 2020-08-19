@@ -131,12 +131,12 @@
 <script>
   let form = document.getElementsByClassName('tag-form')[0];
   if (form.attachEvent) {
-      form.attachEvent("submit", processForm);
+      form.attachEvent("submit", add_tag);
   } else {
-      form.addEventListener("submit", processForm);
+      form.addEventListener("submit", add_tag);
   }
 
-  function processForm(e) {
+  function add_tag(e) {
     let imgID = window.location.pathname.split('/')[2];
 
     if (e.preventDefault) e.preventDefault();
@@ -146,6 +146,9 @@
         url: '/addTag',
         data: { "tags": tag_writebox.value, "image": imgID },
         success: function (data) {
+          if ("error" in data) {
+            show_snackbar(data["error"]);
+          }
           tag_writebox.value = "";
           tag_container.innerHTML = "";
           $(".tag-form").hide();

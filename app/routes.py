@@ -343,6 +343,12 @@ def change_permission():
   permission = request.form['permission'] 
   permission_state = request.form['permission_state']
   
+  perm = PermissionQuery.get_filter_permissions()
+  print(perm)
+  print(permission_state)
+  if permission in perm and permission_state == "false":
+    AccountQuery.update_filter(username, 1)
+
   Account_permissionQuery.change_permission(current_user.username, username, permission, permission_state)
 
   return make_response(jsonify(action="success"), 200)

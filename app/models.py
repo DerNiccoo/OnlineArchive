@@ -223,6 +223,11 @@ class PermissionQuery(object):
     permissions = Permission.query.all()
     return permissions 
 
+  @staticmethod
+  def get_filter_permissions():
+    permissions = Permission.query.filter(Permission.name.ilike('%filter%'))
+    return [p.name for p in permissions]
+
 class Image_Text(db.Model):
   id = db.Column(db.Integer, db.ForeignKey('image.id'), primary_key=True)
   tag = db.Column(db.String(128), primary_key=True)

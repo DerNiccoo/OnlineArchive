@@ -307,7 +307,7 @@
           show_snackbar(data["error"]);
         }
         else if (data["action"] == "success") {
-          if (data['change_passwort' == true]) {
+          if (data['change_password'] == true) {
             sessionStorage.setItem("change_password", true, { sameSite:'strict; Secure' });
           }
           

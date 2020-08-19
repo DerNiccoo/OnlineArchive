@@ -244,7 +244,7 @@ def login():
   if user.check_password(password):
     login_user(user, remember=True)
     if user.default_pw:
-      return make_response(jsonify(action="success", change_passwort = True), 200) 
+      return make_response(jsonify(action="success", change_password = True), 200) 
     return make_response(jsonify(action="success"), 200)  
   else:
     return make_response(jsonify(action="failed", error="Ungültiges Passwort!"), 200)    

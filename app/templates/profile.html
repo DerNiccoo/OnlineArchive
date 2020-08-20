@@ -5,6 +5,20 @@
   
   <div class="user-stats">
     <!-- Hier soll später stehen: Dabei seit, Hochlads, anzahl gesetzter Tags, Rank -->
+    <div class="tab-bar">
+      {% if created_at is defined and diff is defined %}
+      <span>Dabei seit </span>
+      <em>{{ created_at }} ({{diff}} Tage)</em>
+      {% endif %}
+      {% if uploads is defined %}
+      <span>Uploads</span>
+      <em>{{ uploads }}</em>
+      {% endif %}
+      {% if tags is defined %}
+      <span>Tags</span>
+      <em>{{ tags }}</em>
+      {% endif %}
+    </div>
   </div>
   
   {% if profile_user.username == current_user.username %}

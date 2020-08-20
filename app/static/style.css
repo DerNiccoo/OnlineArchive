@@ -401,6 +401,20 @@ ul.permissions .permission {
   color: var(--theme-secondary-color);
 }
 
+.tab-bar {
+  padding: 12px 0;
+  font-size: 16px;
+}
+
+.tab-bar span {
+  color: #888;
+}
+
+.tab-bar em {
+  font-style: normal;
+  margin-right: 16px;
+  margin-left: 4px;
+}
 /* Profile Region End */
 
 /* Member Region START */

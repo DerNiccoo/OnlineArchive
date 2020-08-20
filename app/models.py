@@ -157,6 +157,11 @@ class Image(db.Model):
 
 class ImageQuery(object):
   @staticmethod
+  def count_uploads_from_user(username):
+    uploads_count = Image.query.filter_by(username=username).count()
+    return uploads_count
+
+  @staticmethod
   def get_available_images(search_items, user_filter):
     if search_items == None:
       images = Image.query.filter(Image.filter.in_(user_filter)).order_by(Image.id).all()
@@ -262,3 +267,8 @@ class Image_TextQuery(object):
     image_Texts = Image_Text.query.filter_by(id=image_id).all()
     list_of_tags = [image_Text.tag for image_Text in image_Texts]
     return list_of_tags
+
+  @staticmethod
+  def count_tags_from_user(username):
+    tag_count = Image_Text.query.filter_by(username=username).count()
+    return tag_count

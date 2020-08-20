@@ -15,6 +15,7 @@ from app.thumbnail_image import create_thumbnail
 
 import os
 import time
+import datetime
 from shutil import copyfile
 
 @app.route("/")
@@ -311,7 +312,13 @@ def profile(username):
   profile_user = AccountQuery.get_User(username)
   profile_user.password_hash = None
 
-  return render_template('profile.html', current_user = current_user, profile_user = profile_user) 
+  uploads = ImageQuery.count_uploads_from_user(profile_user.username)
+  tags = Image_TextQuery.count_tags_from_user(profile_user.username)
+
+  created_at = profile_user.created_at.strftime("%d.%m.%Y")
+  diff = (datetime.datetime.now() - profile_user.created_at).days
+
+  return render_template('profile.html', current_user = current_user, profile_user = profile_user, uploads=uploads, tags=tags, created_at=created_at, diff=diff) 
 
 @app.route('/getPermissions', methods=['POST'])
 @login_required

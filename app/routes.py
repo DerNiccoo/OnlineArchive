@@ -48,8 +48,6 @@ def template_upload():
       file_type = file.filename.split('.')[1]      
       num_files = ImageQuery.upload_image(current_user.username, 0, file_type) 
       
-      print(f'Number of Images currently in the system: {num_files}')
-
       file_filename = f'{num_files}.{file_type}'
       full_name = os.getcwd() + f'/app/thumb/{file_filename}'
 
@@ -139,7 +137,6 @@ def confirm_upload():
   session.pop('file_urls', None)
 
   tags, duplicates = tags_to_list(request.form.get('tags'))
-  print(tags)
   img_filter = request.form.get("filter")
 
   for path in file_urls:
@@ -232,10 +229,8 @@ def get_content(filename):
   if img_info.filter > 1:
     if current_user.is_authenticated: 
       if img_info.filter not in get_user_filter(): 
-        print("no permission")
         return make_response(jsonify(action="failed", error="Fehlende Berechtigung"), 401) 
     else:
-      print("no permission")
       return make_response(jsonify(action="failed", error="Fehlende Berechtigung"), 401)
   return send_from_directory("", filename)
 
@@ -344,8 +339,6 @@ def change_permission():
   permission_state = request.form['permission_state']
   
   perm = PermissionQuery.get_filter_permissions()
-  print(perm)
-  print(permission_state)
   if permission in perm and permission_state == "false":
     AccountQuery.update_filter(username, 1)
 

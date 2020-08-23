@@ -23,6 +23,18 @@ def index():
   session['file_urls'] = []
   return render_template('overview.html', current_user = current_user)
 
+@app.route("/contact")
+def contact():
+  return render_template("contact.html")
+
+@app.route("/impressum")
+def impressum():
+  return render_template("impressum.html")
+
+@app.route("/agb")
+def agb():
+  return render_template("agb.html")
+
 @app.route("/search/<string:search>", methods=['GET', 'POST'])
 def search_images(search):
   return render_template('overview.html', current_user = current_user)

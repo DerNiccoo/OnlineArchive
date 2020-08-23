@@ -425,3 +425,32 @@ ul.permissions .permission {
 }
 
 /* Member Region END */
+
+/* Footer */
+#footer-links {
+  font-size: 12px;
+  width: inherit;
+  max-width: inherit;
+  position: fixed;
+  bottom: 0;
+  margin: auto;
+  text-align: right;
+  line-height: 2;
+  padding: 8px 16px 8px 8px;
+}
+
+#footer-links a {
+  color: #888;
+  margin-left: 16px;
+}
+
+#footer-links a:hover {
+  color: #FFF;
+}
+
+h3 {
+  font-size: 1rem;
+  font-weight: normal;
+  text-transform: uppercase;
+  margin: 24px 0 8px 0;
+}

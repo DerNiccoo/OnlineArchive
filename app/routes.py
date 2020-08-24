@@ -9,7 +9,7 @@ from app import img_upload
 from app import db
 #from app.forms import LoginForm
 from flask_login import current_user, login_user, logout_user, login_required
-from app.models import Account, Account_permission, Permission, Image, Image_Text, ImageQuery, Image_TextQuery, AccountQuery, PermissionQuery, Account_permissionQuery
+from app.models import Account, Account_permission, Permission, Image, Image_Text, ImageQuery, Image_TextQuery, AccountQuery, PermissionQuery, Account_permissionQuery, FilterQuery, Account_FilterQuery
 from app.forms import RegistrationForm, ChangePasswordForm
 from app.thumbnail_image import create_thumbnail
 
@@ -17,6 +17,8 @@ import os
 import time
 import datetime
 from shutil import copyfile
+
+locked_filters = [0, 3, 4, 5]
 
 @app.route("/")
 def index():
@@ -91,12 +93,13 @@ def load():
       searchList = create_search_term(request.args.get("s"))
       user_filter = get_user_filter()
 
-      files = ImageQuery.get_available_images(searchList, user_filter)
+      files, img_filters = ImageQuery.get_available_images(searchList, user_filter)
       num_files = len(files)
       
       counter = int(request.args.get("c"))  # The 'counter' value sent in the QS
 
       action = "more"
+      filters = []
 
       if counter == 0:
           # Slice 0 -> quantity from the db
@@ -108,12 +111,13 @@ def load():
             action = "last"          
 
           for x in range(num_files - 1, num_files - available - 1, -1):
+            filters.append(img_filters[x])
             if os.path.exists(os.getcwd() +  f"/app/thumb/{files[x]}.jpg"):
               db.append(f"/content/thumb/{files[x]}.jpg")
             else:
               db.append(f"/content/thumb/{files[x]}.png")
 
-          res = make_response(jsonify(action = action, images = db), 200)
+          res = make_response(jsonify(action = action, images = db, filters = filters), 200)
 
       elif counter >= num_files:
           res = make_response(jsonify(action = "end"), 200)
@@ -128,12 +132,13 @@ def load():
             action = "last" 
 
           for x in range(num_files - counter, num_files - limit, -1):
+            filters.append(img_filters[x])
             if os.path.exists(os.getcwd() +  f"/app/thumb/{files[x]}.jpg"):
               db.append(f"/content/thumb/{files[x]}.jpg")
             else:
               db.append(f"/content/thumb/{files[x]}.png")
 
-          res = make_response(jsonify(action = action, images = db), 200)
+          res = make_response(jsonify(action = action, images = db, filters = filters), 200)
 
     return res
 
@@ -151,10 +156,15 @@ def confirm_upload():
 
   tags, duplicates = tags_to_list(request.form.get('tags'))
   img_filter = request.form.get("filter")
+  
+  if img_filter == None:
+    img_filter = 0
 
   for path in file_urls:
     img_id = path.split('/')[2].split('.')[0]
-    ImageQuery.change_img_filter(img_id, img_filter)
+    if "content_confirm" in current_user.permissions_name:
+      ImageQuery.change_img_filter(img_id, img_filter)
+
     for tag in tags:
       image_Text = Image_Text(img_id, tag, current_user.username)
       db.session.add(image_Text)
@@ -166,7 +176,8 @@ def confirm_upload():
 def show_img(img_ID):
   #TODO: This just loads the page, nothing with path
   imgPath = f"../content/img/{img_ID}.jpg"
-  return render_template('imageView.html', imgPath = imgPath, current_user = current_user)
+  filters = FilterQuery.get_all_filters_above_value(1)
+  return render_template('imageView.html', imgPath = imgPath, current_user = current_user, filters = filters)
 
 @app.route("/data", methods=['POST'])
 def get_item_data():
@@ -232,7 +243,9 @@ def results():
   # set the file_urls and remove the session variable
   file_urls = session['file_urls']
   
-  return render_template('results.html', file_urls=file_urls, current_user = current_user)
+  filters = FilterQuery.get_all_filters_above_value(1)
+
+  return render_template('results.html', file_urls=file_urls, current_user = current_user, filters = filters)
 
 @app.route('/content/<path:filename>')
 def get_content(filename):
@@ -276,20 +289,18 @@ def logout():
 @app.route('/filter', methods=['POST'])
 @login_required
 def filter():
-  user_filter = 0
+  perm_name, _ = FilterQuery.get_permission_filters()
+  all_filters = FilterQuery.get_all_filters()
 
-  sfw = 1 if request.form.get("SFW") else 0 
-  nsfw = 2 if request.form.get("NSFW") else 0
-  user_filter = sfw + nsfw
+  Account_FilterQuery.remove_user_filters(current_user.username)  
 
-  if "filter3" in current_user.permissions_name and request.form.get("NSFL"):
-    user_filter += 4
-  if "filter4" in current_user.permissions_name and request.form.get("SECRET"):
-    user_filter += 8
-  if "filter5" in current_user.permissions_name and request.form.get("TOP_SECRET"):
-    user_filter += 16
-  
-  AccountQuery.update_filter(current_user.username, (user_filter))
+  for f in all_filters:
+    if f.name in perm_name:
+      if f.name not in current_user.permissions_name:
+        continue
+    if request.form.get(f.name):
+      Account_FilterQuery.add_user_filters(current_user.id, f.id)
+
   return redirect(url_for('index'))
 
 @app.route('/changeFilter', methods=['POST'])
@@ -359,7 +370,7 @@ def change_permission():
   
   perm = PermissionQuery.get_filter_permissions()
   if permission in perm and permission_state == "false":
-    AccountQuery.update_filter(username, 1)
+    Account_FilterQuery.remove_user_filters(username)
 
   Account_permissionQuery.change_permission(current_user.username, username, permission, permission_state)
 
@@ -417,6 +428,32 @@ def register():
     AccountQuery.create_user(form.username.data, form.password.data)
     return jsonify(action="success", username=form.username.data)
   return jsonify(action="failed", error=form.errors)
+
+@app.route('/filterForm', methods=['POST'])
+@login_required
+def filterForm():
+  available_filters = FilterQuery.get_all_filters()
+  locked_name, locked_value = FilterQuery.get_permission_filters()
+  filters = []
+
+  for f in available_filters:
+    if f.value in locked_value:
+      if f.name not in current_user.permissions_name:
+        continue
+
+    filters.append([f.value, f.name, f.label])
+
+  return render_template('filter.html', filters = filters)
+
+@app.route('/userFilter', methods=['POST'])
+@login_required
+def get_user_filter_form():
+  user_filter = Account_FilterQuery.get_user_filters(current_user.id)
+ 
+  if len(user_filter) == 0:
+    user_filter.append(FilterQuery.get_filter_by_value(1))
+    
+  return make_response(jsonify(action="success", user_filter=user_filter))
 
 def get_user_filter():
   if current_user.is_authenticated:

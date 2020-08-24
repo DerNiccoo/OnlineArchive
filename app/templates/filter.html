@@ -1,0 +1,19 @@
+<div class="modal-header">				
+  <h4 class="modal-title modalFilterTitle">Filter</h4>
+  <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+</div>
+<div class="modal-body">
+  <form id="filterOptions" action="{{ url_for('filter') }}" method="post">
+    {% for filter in filters %}
+      <div class="form-group">
+        <div class="custom-control custom-checkbox">
+          <input type="checkbox" class="custom-control-input" id="{{ filter[1] }}" name="{{ filter[1] }}">
+          <label class="custom-control-label" for="{{ filter[1] }}">{{ filter[2] }}</label>
+        </div>
+      </div>
+    {% endfor %}   
+    <div class="form-group">
+      <input type="submit" value="Speichern">
+    </div>
+  </form>
+</div>

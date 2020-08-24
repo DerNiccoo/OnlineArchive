@@ -42,7 +42,10 @@
         {% endif %}
         {% if current_user.username is defined %}
         <li class="nav-item">
-          <a class="nav-link" data-toggle="modal" data-target="#modalFilterForm">Filter</a>
+          <!--
+            <a class="nav-link" data-toggle="modal" data-target="#modalFilterForm">Filter</a>
+          -->
+          <a class="nav-link" data-toggle="modal" data-target="#modalForm" onclick="show_filter_form()">Filter</a>
         </li>
         {% endif %}
         {% if current_user.username is defined %}
@@ -171,6 +174,30 @@
 </html>
 
 <script>
+  function show_filter_form() {
+    $.ajax({
+      type: "POST",
+      url: "{{ url_for('filterForm') }}",
+      success: function (data) {
+        document.getElementById('modal-dialog').innerHTML = data;
+        $.ajax({
+          type: "POST",
+          url: "{{ url_for('get_user_filter_form') }}",
+          success: function (data) {
+            if (data["action"] == "success") {
+              data["user_filter"].forEach(filter => {
+                document.getElementById(filter[1]).checked = true;
+              });
+            }
+          }
+        });  
+
+      }
+    });     
+  }
+</script>
+
+<script>
   function show_registar_form() {
     $.ajax({
       type: "POST",
@@ -283,31 +310,6 @@
     e.preventDefault(); // block the traditional submission of the form.
   });
 
-  // Abfangen der Filteroptionen, um vorher die cookies zu setzen
-  $('#filterOptions').submit(function() {
-    let sfw = getFilterValue("SFW")
-    let nsfw = getFilterValue("NSFW")
-    let nsfl = getFilterValue("NSFL")
-    let secret = getFilterValue("SECRET")
-    let top_secret = getFilterValue("TOP_SECRET")
-
-    if (!sfw && !nsfw && !nsfl && !secret && !top_secret) {
-      sfw = true;
-      document.getElementById("SFW").checked = true;
-    }
-
-    sessionStorage.setItem("filter", JSON.stringify({SFW: sfw, NSFW: nsfw, NSFL: nsfl, SECRET: secret, TOP_SECRET: top_secret}), { sameSite:'strict; Secure' });
-    return true;
-  });
-
-  function getFilterValue(elementID) {
-    let element = document.getElementById(elementID);
-    if (typeof(element) != 'undefined' && element != null) {
-      return element.checked;
-    }
-    return false;
-  }
-
   function login() {
     $.ajax({
       type: "POST",
@@ -328,39 +330,10 @@
     });
   }
 
-set_filter("{{ current_user._filter }}");
-
 if (sessionStorage.getItem("change_password")) {
   show_snackbar("Bitte änder dein initiales Passwort!");
   $('#modalForm').modal('show');
   show_change_password_form();
-}
-
-function set_filter(filter_list_as_string) {
-  /// Sadly the worst solution but since i need to check each element by its own this is kinda oke?
-  let filter_json = {"SFW": false, "NSFW": false, "NSFL": false, "SECRET": false, "TOP_SECRET": false};
-  if (filter_list_as_string.includes("1")){
-    document.getElementById("SFW").checked = true;
-    filter_json["SFW"] = true;
-  } 
-  if (filter_list_as_string.includes("2")) {
-    document.getElementById("NSFW").checked = true;
-    filter_json["NSFW"] = true;
-  } 
-  if (filter_list_as_string.includes("3")) {
-    document.getElementById("NSFL").checked = true;
-    filter_json["NSFL"] = true;
-  } 
-  if (filter_list_as_string.includes("4")) {
-    document.getElementById("SECRET").checked = true;
-    filter_json["SECRET"] = true;
-  } 
-  if (filter_list_as_string.includes("5")) {
-    document.getElementById("TOP_SECRET").checked = true;
-    filter_json["TOP_SECRET"] = true;
-  } 
-  
-  sessionStorage.setItem("filter", filter_json, { sameSite:'strict; Secure' });
 }
 
 </script>

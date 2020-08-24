@@ -20,6 +20,7 @@ class Account(UserMixin, db.Model):
   created_at = db.Column(db.DateTime, index=True, default=datetime.utcnow)
   default_pw = db.Column(db.Boolean, default=True)
   permissions = db.relationship("Account_permission", back_populates="account")
+  filter_rel = db.relationship("Account_Filter", back_populates="account_rel")
   permissions_name = []
   #permission_assigner = db.relationship("Account_permission", back_populates="assigner", lazy="dynamic")
 
@@ -37,19 +38,16 @@ class Account(UserMixin, db.Model):
   def __repr__(self):
     return '<Account {}>'.format(self.username)
 
-  def create_user_filter(self, binaryFilter = None):
-    if binaryFilter == None:
-      binaryFilter = self.filter 
+  def create_user_filter(self):
+    res = []
 
-    binary = [int(x) for x in bin(binaryFilter)[2:]]
-    binary.reverse()
-    user_filter = []
+    for f in self.filter_rel:
+      res.append(f.filter_rel.value)
 
-    for index, value in enumerate(binary):
-      if (value == 1):
-        user_filter.append((index + 1))
+    if len(res) == 0:
+      res.append(1) # Filter with value 1 is default filter!!!
 
-    return tuple(user_filter)
+    return tuple(res)
 
   def set_permissions_name(self):
     names = []
@@ -175,8 +173,9 @@ class ImageQuery(object):
 
 
     list_of_ids = [image.id for image in images]
+    list_of_filters = [image.filter for image in images]
 
-    return list_of_ids
+    return list_of_ids, list_of_filters
 
   @staticmethod
   def upload_image(username, img_filter, datatype):
@@ -225,7 +224,7 @@ class Permission(db.Model):
 class PermissionQuery(object):
   @staticmethod
   def get_permissions():
-    permissions = Permission.query.all()
+    permissions = Permission.query.order_by(Permission.label).all()
     return permissions 
 
   @staticmethod
@@ -272,3 +271,79 @@ class Image_TextQuery(object):
   def count_tags_from_user(username):
     tag_count = Image_Text.query.filter_by(username=username).count()
     return tag_count
+
+class Filter(db.Model):
+  id = db.Column(db.Integer, primary_key=True)
+  name = db.Column(db.String(128))
+  label = db.Column(db.String(128))
+  value = db.Column(db.Integer)
+  permission_required = db.Column(db.Boolean, default=True)
+  account_filter_rel = db.relationship("Account_Filter", back_populates="filter_rel")
+
+class FilterQuery(object):
+  @staticmethod
+  def get_all_filters():
+    filters = Filter.query.order_by(Filter.id).all()
+    return filters
+
+  @staticmethod
+  def get_all_filters_above_value(value):
+    filters = Filter.query.filter(Filter.value >= value).order_by(Filter.id).all()
+    
+    res = []
+    for f in filters:
+      res.append([f.value, f.name, f.label])
+
+    return res
+
+  @staticmethod
+  def get_permission_filters():
+    filters = Filter.query.filter(Filter.permission_required == True).order_by(Filter.id).all()
+
+    names = []
+    values = []
+    for f in filters:
+      names.append(f.name)
+      values.append(f.value)
+
+    return (names, values)
+
+  @staticmethod
+  def get_filter_by_value(value):
+    f = Filter.query.filter(Filter.value == value).first()
+    return [f.value, f.name, f.label]
+
+class Account_Filter(db.Model):
+  user_id = db.Column(db.Integer, db.ForeignKey('account.id'), primary_key=True)
+  filter_id = db.Column(db.Integer, db.ForeignKey('filter.id'), primary_key=True)
+  account_rel = db.relationship("Account", back_populates="filter_rel")
+  filter_rel = db.relationship("Filter", back_populates="account_filter_rel")
+
+  def __init__(self, user, filter):
+    self.user_id = user
+    self.filter_id = filter
+
+class Account_FilterQuery(object):
+  @staticmethod
+  def get_user_filters(account_id):
+    filters = Account_Filter.query.filter(Account_Filter.user_id == account_id).all()
+
+    res = []
+    for f in filters:
+      res.append([f.filter_rel.value, f.filter_rel.name, f.filter_rel.label])
+    
+    return res
+
+  @staticmethod
+  def add_user_filters(account_id, filter):
+    acc_filter = Account_Filter(account_id, filter)
+    db.session.add(acc_filter)
+    db.session.commit()
+    return None
+
+  @staticmethod
+  def remove_user_filters(account):
+    user = Account.query.filter(Account.username == account).first()
+    Account_Filter.query.filter(Account_Filter.user_id == user.id).delete()
+    db.session.commit()
+    return None

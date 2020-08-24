@@ -25,37 +25,14 @@
     {% endif %}
     {% if 'filter_change' in current_user.permissions_name %}
     <div class="item-filter">
+      {% for filter in filters %}
       <div class="form-check form-check-inline">
         <div class="custom-control custom-radio">
-          <input type="radio" class="custom-control-input" id="SFW_img" name="filter" onchange="filter_change()" value="1">
-          <label class="custom-control-label" for="SFW_img">SFW</label>
+          <input type="radio" class="custom-control-input" id="{{ filter[1] }}" name="filter" onchange="filter_change()" value="{{ filter[0] }}">
+          <label class="custom-control-label" for="{{ filter[1] }}">{{ filter[2] }}</label>
         </div>
       </div>
-      <div class="form-check form-check-inline">
-        <div class="custom-control custom-radio">
-          <input type="radio" class="custom-control-input" id="NSFW_img" name="filter" onchange="filter_change()" value="2">
-          <label class="custom-control-label" for="NSFW_img">NSFW</label>
-        </div>
-      </div>
-      <div class="form-check form-check-inline">
-        <div class="custom-control custom-radio">
-          <input type="radio" class="custom-control-input" id="NSFL_img" name="filter" onchange="filter_change()" value="3">
-          <label class="custom-control-label" for="NSFL_img">NSFL</label>
-        </div>
-      </div>
-      <div class="form-check form-check-inline">
-        <div class="custom-control custom-radio">
-          <input type="radio" class="custom-control-input" id="SECRET_img" name="filter" onchange="filter_change()" value="4">
-          <label class="custom-control-label" for="SECRET_img">SECRET</label>
-        </div>
-      </div>
-      <div class="form-check form-check-inline">
-        <div class="custom-control custom-radio">
-          <input type="radio" class="custom-control-input" id="TOP_SECRET_img" name="filter" onchange="filter_change()" value="5">
-          <label class="custom-control-label" for="TOP_SECRET_img">TOP SECRET</label>
-        </div>	
-      </div>   
-    </div>
+      {% endfor %}  
     {% endif %}
     <div class="item-details">
       <span class="time">Hochgeladen am: </span>

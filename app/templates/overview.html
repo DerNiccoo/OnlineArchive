@@ -63,6 +63,11 @@
 
           // Query & update the template content
           template_clone.querySelector("#image").src = images[i];
+
+          if (data["filters"][i] == 0) {
+            template_clone.querySelector("#image").style.opacity = 0.5;
+          }
+          
           template_clone.querySelector("#img_url").href = '/img/' + id;
 
           // Append template to dom

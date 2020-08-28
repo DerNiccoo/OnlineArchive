@@ -26,3 +26,5 @@ Since this project uses flask migrate, the database can be easily initialized wi
 flask db init
 flask db upgrade
 ```
+
+Hint: Importing the DB like this doesnt work. Im still looking to find a way to correctly import the db and fill it with some default values.

@@ -9,7 +9,7 @@ from app import img_upload
 from app import db
 #from app.forms import LoginForm
 from flask_login import current_user, login_user, logout_user, login_required
-from app.models import Account, Account_permission, Permission, Image, Image_Text, ImageQuery, Image_TextQuery, AccountQuery, PermissionQuery, Account_permissionQuery, FilterQuery, Account_FilterQuery
+from app.models import Account, Account_permission, Permission, Image, Image_Text, ImageQuery, Image_TextQuery, AccountQuery, PermissionQuery, Account_permissionQuery, FilterQuery, Account_FilterQuery, Account_RankQuery, RankQuery
 from app.forms import RegistrationForm, ChangePasswordForm
 from app.thumbnail_image import create_thumbnail
 
@@ -358,6 +358,27 @@ def get_permissions():
   
   return jsonify(action="success", permissions = permissions, user_permissions = user_permissions)
 
+
+@app.route('/getRanks', methods=['POST'])
+@login_required
+def get_ranks():
+  if "rank_change" not in current_user.permissions_name:
+    return make_response(jsonify(action="failed", error="Fehlende Berechtigung"), 401)
+
+  user = AccountQuery.get_User(request.form['username'])
+  if not user.rank_rel:
+    user_rank = ""
+  else:
+    user_rank = user.rank_rel[0].rank_rel.name
+    
+  rank_query = RankQuery.get_all_ranks()
+  ranks = []
+
+  for r in rank_query:
+    ranks.append([r.name, r.label])  
+
+  return jsonify(action="success", ranks = ranks, user_rank = user_rank)
+
 @app.route('/changePermission', methods=['POST'])
 @login_required
 def change_permission():
@@ -373,6 +394,17 @@ def change_permission():
     Account_FilterQuery.remove_user_filters(username)
 
   Account_permissionQuery.change_permission(current_user.username, username, permission, permission_state)
+
+  return make_response(jsonify(action="success"), 200)
+
+@app.route('/changeRank', methods=['POST'])
+@login_required
+def change_rank():
+  if "rank_change" not in current_user.permissions_name:
+    return make_response(jsonify(action="failed", error="Fehlende Berechtigung"), 401)
+
+  Account_RankQuery.remove_user_rank(request.form['username'])
+  Account_RankQuery.add_user_rank(request.form['username'], request.form['rank'])
 
   return make_response(jsonify(action="success"), 200)
 

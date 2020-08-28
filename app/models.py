@@ -21,6 +21,7 @@ class Account(UserMixin, db.Model):
   default_pw = db.Column(db.Boolean, default=True)
   permissions = db.relationship("Account_permission", back_populates="account")
   filter_rel = db.relationship("Account_Filter", back_populates="account_rel")
+  rank_rel = db.relationship("Account_Rank", back_populates="account_rel")
   permissions_name = []
   #permission_assigner = db.relationship("Account_permission", back_populates="assigner", lazy="dynamic")
 
@@ -345,5 +346,54 @@ class Account_FilterQuery(object):
   def remove_user_filters(account):
     user = Account.query.filter(Account.username == account).first()
     Account_Filter.query.filter(Account_Filter.user_id == user.id).delete()
+    db.session.commit()
+    return None
+
+class Rank(db.Model):
+  id = db.Column(db.Integer, primary_key=True)
+  name = db.Column(db.String(128))
+  label = db.Column(db.String(128))  
+  account_rank_rel = db.relationship("Account_Rank", back_populates="rank_rel")
+
+class RankQuery(object):
+  @staticmethod
+  def get_all_ranks():
+    ranks = Rank.query.order_by(Rank.id).all()
+    return ranks
+
+class Account_Rank(db.Model):
+  user_id = db.Column(db.Integer, db.ForeignKey('account.id'), primary_key=True)
+  rank_id = db.Column(db.Integer, db.ForeignKey('rank.id'), primary_key=True)
+  account_rel = db.relationship("Account", back_populates="rank_rel")
+  rank_rel = db.relationship("Rank", back_populates="account_rank_rel")
+
+  def __init__(self, user_id, rank_id):
+    self.user_id = user_id
+    self.rank_id = rank_id
+
+class Account_RankQuery(object):
+  @staticmethod
+  def get_user_ranks(account_id):
+    ranks = Account_Rank.query.filter(Account_Rank.user_id == account_id).first()
+
+    res = []
+    for f in ranks:
+      res.append([f.rank_rel.name, f.rank_rel.label])
+    
+    return res
+
+  @staticmethod
+  def add_user_rank(username, rank_name):
+    rank = Rank.query.filter(Rank.name == rank_name).first()
+    user = Account.query.filter(Account.username.ilike(username)).first()
+    acc_rank = Account_Rank(user.id, rank.id)
+    db.session.add(acc_rank)
+    db.session.commit()
+    return None
+
+  @staticmethod
+  def remove_user_rank(username):
+    user = Account.query.filter(Account.username == username).first()
+    Account_Rank.query.filter(Account_Rank.user_id == user.id).delete()
     db.session.commit()
     return None

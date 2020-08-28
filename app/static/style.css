@@ -372,14 +372,14 @@ h2.section {
   margin: 38px 0 12px 0;
 }
 
-ul.permissions  { 
+ul.permissions, ul.rank  { 
   margin: 0; 
   padding: 0; 
   margin-left: 20px; 
   list-style: none; 
 } 
 
-ul.permissions li input { 
+ul.permissions li input, ul.rank li input { 
   margin-right: .25em; 
 } 
 
@@ -389,7 +389,7 @@ ul.permissions li {
   width: 25em;
 } 
 
-ul.permissions .permission {
+ul.permissions .permission, ul.rank, .rank {
   margin-top: 15px;
 }
 

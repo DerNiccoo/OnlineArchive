@@ -28,11 +28,21 @@
   {% endif %}
   
   <!-- TODO: Das ganze noch um eine Preview der neusten Hochlads erweitern -->
-  <div class="pane" style="display: none;">
+  <div class="pane">
     <!-- Hier soll es möglich sein, den Rank des Nutzers festzulegen -->
     <h2 class="section">
-      Rangordnung WIP
+      Dienstgrad WIP
     </h2>
+    <ul class="rank" id="rank-list">
+      <template id="template_rank">
+        <li>
+          <div class="custom-control custom-radio rank">
+            <input type="radio" class="custom-control-input" id="rank" name="radio-rank" onchange="rank_change(this)"/>
+            <label class="custom-control-label" id="rank-label" for="radio">Example</label>
+          </div>
+        </li>
+      </template>
+    </ul>
   </div>
   {% if 'allow_permission' in current_user.permissions_name %}
   <div class="pane">
@@ -61,6 +71,53 @@
 "{% if 'allow_permission' in current_user.permissions_name %}"
 load_permissions();
 "{% endif %}"
+
+"{% if 'rank_change' in current_user.permissions_name %}"
+load_ranks();
+"{% endif %}"
+
+function load_ranks() {
+  let template_rank = document.getElementById("template_rank");
+  let rank_list = document.getElementById("rank-list");
+
+  $.ajax({
+    type: "POST",
+    url: "{{ url_for('get_ranks') }}",
+    data: { "username": "{{ profile_user.username }}" },
+    success: function (data) {
+      if (data["action"] == "success") {
+        
+        data["ranks"].forEach(element => {
+          let template_clone = template_rank.content.cloneNode(true);
+          
+          if (data["user_rank"] == element[0]) {
+            template_clone.querySelector("#rank").checked = true;
+          }
+          
+          template_clone.querySelector("#rank").id = element[0];
+          template_clone.querySelector("#rank-label").htmlFor = element[0];
+          template_clone.querySelector("#rank-label").innerHTML = element[1];
+          
+
+          rank_list.appendChild(template_clone);
+        });
+      }      
+    }
+  });  
+}
+
+function rank_change(element) {
+  $.ajax({
+    type: "POST",
+    url: "{{ url_for('change_rank') }}",
+    data: { "username": "{{ profile_user.username }}", "rank": element.id },
+    success: function (data) {
+      if (data["action"] == "success") {
+        show_snackbar("Nutzerrechte erfolgreich geändert!")
+      }      
+    }
+  });
+}
 
 function load_permissions() {
   let template_permission = document.getElementById("template_permission");

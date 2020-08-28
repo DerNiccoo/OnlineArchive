@@ -208,7 +208,7 @@
               item.checked = true;
             }
           };
-          console.log(new Date(data["time"]));
+
           time.title = timeConverter(data["time"], false);
           time.innerHTML = timeConverter(data["time"], true);
           user.href = "/user/" + data["author"];
@@ -278,7 +278,6 @@
 
 <script>
   function remove(entry) {
-    console.log(entry);
     let tag_collection = tag_writebox.value;
 
     if (tag_collection.includes(entry + ',')) {
@@ -291,7 +290,6 @@
     
 
     tag_writebox.value = tag_collection;
-    console.log(tag_collection);
   }
 </script>
 

@@ -42,9 +42,6 @@
         {% endif %}
         {% if current_user.username is defined %}
         <li class="nav-item">
-          <!--
-            <a class="nav-link" data-toggle="modal" data-target="#modalFilterForm">Filter</a>
-          -->
           <a class="nav-link" data-toggle="modal" data-target="#modalForm" onclick="show_filter_form()">Filter</a>
         </li>
         {% endif %}
@@ -111,60 +108,6 @@
     <div class="modal-dialog modal-form">
       <div class="modal-content modalContent" id="modal-dialog">
 
-      </div>
-    </div>
-  </div>
-
-  <div class="modal fade" id="modalFilterForm">
-    <div class="modal-dialog modal-sm modal-filter">
-      <div class="modal-content modalFilterContent">
-        <div class="modal-header">				
-          <h4 class="modal-title modalFilterTitle">Filter</h4>
-          <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
-        </div>
-        <div class="modal-body">
-          <form id="filterOptions" action="/filter" method="post">
-            <div class="form-group">
-              <div class="custom-control custom-checkbox">
-                <input type="checkbox" class="custom-control-input" id="SFW" name="SFW">
-                <label class="custom-control-label" for="SFW">SFW</label>
-              </div>
-            </div>
-            <div class="form-group">
-              <div class="custom-control custom-checkbox">
-                <input type="checkbox" class="custom-control-input" id="NSFW" name="NSFW">
-                <label class="custom-control-label" for="NSFW">NSFW</label>
-              </div>
-            </div>
-            {% if 'filter3' in current_user.permissions_name %}
-            <div class="form-group">
-              <div class="custom-control custom-checkbox">
-                <input type="checkbox" class="custom-control-input" id="NSFL" name="NSFL">
-                <label class="custom-control-label" for="NSFL">NSFL</label>
-              </div>
-            </div>
-            {% endif %}
-            {% if 'filter4' in current_user.permissions_name %}
-            <div class="form-group">
-              <div class="custom-control custom-checkbox">
-                <input type="checkbox" class="custom-control-input" id="SECRET" name="SECRET">
-                <label class="custom-control-label" for="SECRET">SECRET</label>
-              </div>
-            </div>
-            {% endif %}
-            {% if 'filter5' in current_user.permissions_name %}
-            <div class="form-group">
-              <div class="custom-control custom-checkbox">
-                <input type="checkbox" class="custom-control-input" id="TOP_SECRET" name="TOP_SECRET">
-                <label class="custom-control-label" for="TOP_SECRET">TOP SECRET</label>
-              </div>	
-            </div>       
-            {% endif %}     
-            <div class="form-group">
-              <input type="submit" value="Speichern">
-            </div>
-          </form>
-        </div>
       </div>
     </div>
   </div>

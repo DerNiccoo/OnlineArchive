@@ -152,7 +152,7 @@
         url: '/removeImage',
         data: { "item": imgID },
         success: function (data) {
-          show_snackbar("Bild erfolgreich gelöscht!");
+          show_snackbar("Datei erfolgreich gelöscht!");
         }
       });
   }
@@ -305,6 +305,22 @@
     $(".tag-form").hide();
     return false; // for good measure
   });
+</script>
+
+<script>
+  document.addEventListener('keypress', hotkey_controll);
+
+  function hotkey_controll(e) {
+    if (e.target.id === 'tag-writebox') {
+      return;
+    }
+
+    if (e.key == "d") {
+      change_item('next');
+    } else if (e.key == "a") {
+      change_item('prev');
+    }
+  }
 </script>
 
 {% endblock %}

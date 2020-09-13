@@ -14,7 +14,7 @@ migrate = Migrate(app, db)
 login = LoginManager(app)
 
 dropzone = Dropzone(app)
-ALLOWED_EXTENSIONS = ('pdf', 'jpg')
+ALLOWED_EXTENSIONS = ('pdf', 'jpg', 'jpeg')
 img_upload = UploadSet('img', extensions = ALLOWED_EXTENSIONS)
 configure_uploads(app, img_upload)
 patch_request_class(app)

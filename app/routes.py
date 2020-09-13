@@ -60,11 +60,12 @@ def template_upload():
     for f in file_obj:
       file = request.files.get(f)
       
-      file_type = file.filename.split('.')[1]      
+      file_type = file.filename.split('.')[1].lower()  
       num_files = ImageQuery.upload_image(current_user.username, 0, file_type) 
       
       file_filename = f'{num_files}.{file_type}'
       full_name = os.getcwd() + f'/app/thumb/{file_filename}'
+      print(file_filename)
 
       filename = img_upload.save(
           file,
@@ -205,6 +206,7 @@ def add_Tag_to_image():
 
   img_tags = Image_TextQuery.get_tags_to_image(request.form['image'])
   raw_tags, duplicates = tags_to_list(request.form['tags'], img_tags)
+  new_tags = []
 
   for tag in raw_tags:
     image_Text = Image_Text(request.form['image'], tag, current_user.username)
@@ -251,6 +253,9 @@ def results():
 def get_content(filename):
   img_id = filename.split("/")[-1].split(".")[0]
   img_info = ImageQuery.get_image_information(img_id)
+
+  if 'thumb' in filename:
+    return send_from_directory("", filename)
 
   if img_info.filter > 1:
     if current_user.is_authenticated: 
